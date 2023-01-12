@@ -2,26 +2,35 @@ package main
 
 import (
 	"fmt"
-	"unsafe"
+	"strings"
 )
 
 func main() {
-	var s string = "hello"
-	fmt.Println("original string:", s)
-	modifyString(&s)
-	fmt.Println(s)
-
+	s := "(name)is(age)yearsold"
+	knowledge := [][]string{{"name", "bob"}, {"age", "two"}}
+	fmt.Println(evaluate(s, knowledge))
 }
 
-func modifyString(s *string) {
-	p := (*uintptr)(unsafe.Pointer(s))
-	var arr *[5]byte = (*[5]byte)(unsafe.Pointer(*p))
-	var len *int = (*int)(unsafe.Pointer(uintptr(unsafe.Pointer(s)) + unsafe.Sizeof((*uintptr)(nil))))
-
-	for i := 0; i < (*len); i++ {
-		fmt.Printf("%p => %c\n", &((*arr)[i]), (*arr)[i])
-		p1 := &((*arr)[i])
-		v := (*p1)
-		(*p1) = v + 1
+func evaluate(s string, knowledge [][]string) string {
+	hash := make(map[string]string, len(knowledge))
+	for _, kd := range knowledge {
+		hash[kd[0]] = kd[1]
 	}
+	ans, start := &strings.Builder{}, -1
+	for i, c := range s {
+		if c == '(' {
+			start = i
+		} else if c == ')' {
+			tmp := string(s[start+1 : i])
+			if v, ok := hash[tmp]; ok {
+				ans.WriteString(v)
+			} else {
+				ans.WriteByte('?')
+			}
+			start = -1
+		} else if start < 0 {
+			ans.WriteRune(c)
+		}
+	}
+	return ans.String()
 }
